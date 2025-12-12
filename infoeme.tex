@@ -1,0 +1,921 @@
+\documentclass[11pt,a4paper]{article}
+% Codificación y español
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+
+% Matemáticas y formato
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{verbatim}
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{mdframed}
+\usepackage{titlesec}
+
+% Listados de código con estilo mejorado
+\usepackage{xcolor}
+\usepackage{listings}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.95}
+\definecolor{codeblue}{rgb}{0.25,0.5,0.8}
+\definecolor{codeorange}{rgb}{0.8,0.4,0}
+
+\lstdefinestyle{codestyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codeorange},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    tabsize=2,
+    language=C++,
+    showstringspaces=false,
+    numbers=left,
+    numbersep=8pt,
+    frame=lines,
+    frameround=tttt,
+    rulecolor=\color{black!30},
+    xleftmargin=15pt,
+    xrightmargin=5pt,
+    framexleftmargin=10pt
+}
+\lstset{style=codestyle}
+
+% Cajas personalizadas
+\newtcolorbox{notebox}[1][]{
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries,
+    title=#1,
+    sharp corners,
+    boxrule=0.5pt
+}
+
+\newtcolorbox{warningbox}[1][]{
+    colback=orange!5!white,
+    colframe=orange!75!black,
+    fonttitle=\bfseries,
+    title=#1,
+    sharp corners,
+    boxrule=0.5pt
+}
+
+\newtcolorbox{resultbox}[1][]{
+    colback=green!5!white,
+    colframe=green!70!black,
+    fonttitle=\bfseries,
+    title=#1,
+    sharp corners,
+    boxrule=0.5pt
+}
+
+% Formato de títulos de sección
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{blue!70!black}}
+  {\thesection}{1em}{}[\titlerule]
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{blue!60!black}}
+  {\thesubsection}{1em}{}
+
+\geometry{margin=1in}
+\graphicspath{{./}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Algoritmos Avanzados}
+\lhead{Efraín Vitorino Marín}
+\rfoot{\thepage}
+
+\begin{document}
+
+%---------------------- Portada ----------------------
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    {\LARGE\bfseries UNIVERSIDAD NACIONAL DE SAN ANTONIO ABAD DEL CUSCO\par}
+    \vspace{0.5cm}
+    {\Large FACULTAD DE INGENIERÍA ELÉCTRICA, ELECTRÓNICA, INFORMÁTICA Y MECÁNICA\par}
+    \vspace{0.5cm}
+    {\Large ESCUELA PROFESIONAL DE INGENIERÍA INFORMÁTICA Y DE SISTEMAS\par}
+    \vfill
+    \includegraphics[width=0.25\linewidth]{Escudo_UNSAAC.png}\par
+    \vfill
+    {\Large\bfseries CURSO: ALGORITMOS AVANZADOS\par}
+    \vspace{0.3cm}
+    {\Large\bfseries TRABAJO: 9 Laboratorio (Segment Tree)\par}
+    \vspace{0.3cm}
+    {\Large\bfseries PROFESOR: Msc. Raúl Huillca Huallparimachi\par}
+    \vspace{1cm}
+    {\Large\bfseries ALUMNO: Efraín Vitorino Marín\par}
+    {\Large\bfseries CÓDIGO: 160337\par}
+    \vfill
+    {\Large 2025-II\par}
+\end{titlepage}
+
+\setcounter{page}{1}
+
+\section{Ejercicio 1: Implementar la Estructura de Datos Avanzada Segment Tree}
+
+\subsection{Descripción del Problema}
+
+Dar la solución al problema disponible en: \url{https://www.spoj.com/problems/GSS1/}, utilizando la estructura Segment Tree analizada y estudiada en clase.
+
+\begin{notebox}[Problema GSS1]
+El problema consiste en encontrar la suma máxima de un subarreglo en un rango dado. Dado un arreglo de $N$ elementos y $Q$ consultas, cada consulta solicita la suma máxima de un subarreglo contiguo en un rango $[l, r]$.
+\end{notebox}
+
+\subsection{Implementación del Código}
+
+\begin{lstlisting}[caption={Solución GSS1 con Segment Tree - gss1segmenttree.cpp}]
+// gss1segmenttree.cpp
+// Solución al problema GSS1 de SPOJ usando Segment Tree
+// Problema: Encontrar la suma máxima de un subarreglo en un rango dado
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+using ll = long long;
+
+struct Node {
+    ll sum;     // suma total del segmento
+    ll pref;    // mejor suma de prefijo
+    ll suf;     // mejor suma de sufijo
+    ll best;    // mejor suma de subarreglo
+    
+    Node() : sum(0), pref(LLONG_MIN / 4), suf(LLONG_MIN / 4), best(LLONG_MIN / 4) {}
+    Node(ll v) : sum(v), pref(v), suf(v), best(v) {}
+};
+
+Node mergeNode(const Node& L, const Node& R) {
+    Node P;
+    P.sum = L.sum + R.sum;
+    P.pref = max(L.pref, L.sum + R.pref);
+    P.suf = max(R.suf, R.sum + L.suf);
+    P.best = max({L.best, R.best, L.suf + R.pref});
+    return P;
+}
+
+struct SegmentTree {
+    int n;
+    vector<Node> tree;
+    
+    SegmentTree(const vector<ll>& arr) {
+        n = (int)arr.size();
+        tree.assign(4 * n, Node());
+        build(1, 0, n - 1, arr);
+    }
+    
+    void build(int pos, int left, int right, const vector<ll>& arr) {
+        if (left == right) {
+            tree[pos] = Node(arr[left]);
+            return;
+        }
+        int mid = (left + right) / 2;
+        build(pos * 2, left, mid, arr);
+        build(pos * 2 + 1, mid + 1, right, arr);
+        tree[pos] = mergeNode(tree[pos * 2], tree[pos * 2 + 1]);
+    }
+    
+    Node queryNode(int pos, int left, int right, int ql, int qr) {
+        if (ql > right || qr < left) return Node();
+        if (ql <= left && right <= qr) return tree[pos];
+        int mid = (left + right) / 2;
+        if (qr <= mid) return queryNode(pos * 2, left, mid, ql, qr);
+        if (ql > mid) return queryNode(pos * 2 + 1, mid + 1, right, ql, qr);
+        Node L = queryNode(pos * 2, left, mid, ql, qr);
+        Node R = queryNode(pos * 2 + 1, mid + 1, right, ql, qr);
+        return mergeNode(L, R);
+    }
+    
+    ll queryMax(int l, int r) {
+        Node res = queryNode(1, 0, n - 1, l, r);
+        return res.best;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<ll> arr(n);
+    for (int i = 0; i < n; ++i) cin >> arr[i];
+
+    SegmentTree seg(arr);
+
+    int q;
+    cin >> q;
+    while (q--) {
+        int l, r;
+        cin >> l >> r; // entrada en SPOJ es 1-based
+        l--; r--;      // convertir a 0-based
+        cout << seg.queryMax(l, r) << '\n';
+    }
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Resultados de la Ejecución}
+
+\begin{resultbox}[GSS1 - SEGMENT TREE - RESULTADOS DETALLADOS]
+Compilación exitosa
+\end{resultbox}
+
+\subsubsection{TEST 1: EJEMPLO SPOJ}
+
+\begin{verbatim}
+Arreglo: [-1, 2, 3]
+Query(1, 2): Buscar max suma en posiciones 1-2 (1-indexed)
+
+RESULTADO: 2
+
+EXPLICACIÓN: En el rango [-1, 2], el mejor subarreglo es [2] = 2
+\end{verbatim}
+
+\subsubsection{TEST 2: MÚLTIPLES QUERIES}
+
+\begin{verbatim}
+Arreglo: [1, -2, 3, 4, -5]
+
+Query 1 RESULTADO: 3
+Query 2 RESULTADO: 7
+Query 3 RESULTADO: 7
+
+EXPLICACIÓN:
+  Query(1,3) en [1,-2,3]: mejor = [3] = 3
+  Query(2,4) en [-2,3,4]: mejor = [3,4] = 7
+  Query(1,5) todo: mejor = [3,4] = 7
+\end{verbatim}
+
+\subsubsection{TEST 3: CASO COMPLEJO}
+
+\begin{verbatim}
+Arreglo: [-5, 1, -3, 4, -2, 6, -1]
+
+Query 1 RESULTADO: 1
+Query 2 RESULTADO: 8
+Query 3 RESULTADO: 8
+Query 4 RESULTADO: 8
+
+EXPLICACIÓN:
+  Query(1,3) en [-5,1,-3]: mejor = [1] = 1
+  Query(3,7) en [-3,4,-2,6,-1]: mejor = [4,-2,6] = 8
+  Query(1,7) todo el arreglo: mejor = [4,-2,6] = 8
+  Query(4,6) en [4,-2,6]: mejor = [4,-2,6] = 8
+\end{verbatim}
+
+\subsubsection{TEST 4: TODOS NEGATIVOS}
+
+\begin{verbatim}
+Arreglo: [-5, -3, -8, -2]
+
+Query 1 RESULTADO: -2
+Query 2 RESULTADO: -3
+Query 3 RESULTADO: -3
+
+EXPLICACIÓN:
+  Cuando todos son negativos, se elige el menos negativo del rango
+  Query(1,4): mejor = [-2] = -2
+  Query(2,3): mejor = [-3] = -3
+  Query(1,2): mejor = [-3] = -3
+\end{verbatim}
+
+\subsubsection{TEST 5: CASO GRANDE}
+
+\begin{verbatim}
+Arreglo: [5, -3, 2, -1, 8, -4, 7, -2, 6, -5]
+
+Query 1 RESULTADO: 11
+Query 2 RESULTADO: 12
+Query 3 RESULTADO: 18
+Query 4 RESULTADO: -1
+Query 5 RESULTADO: 11
+
+EXPLICACIÓN:
+  Query(1,5) en [5,-3,2,-1,8]: mejor = todo = 11
+  Query(3,8) en [2,-1,8,-4,7]: mejor = todo = 12
+  Query(1,10) todo: mejor = [5,-3,2,-1,8,-4,7,-2,6] = 18
+  Query(4,4) en [-1]: mejor = [-1] = -1
+  Query(5,7) en [8,-4,7]: mejor = todo = 11
+\end{verbatim}
+
+\subsection{Resumen de Complejidad}
+
+\begin{notebox}[Complejidad del Algoritmo]
+\begin{itemize}
+    \item \textbf{Construcción del árbol:} $O(N)$
+    \item \textbf{Cada consulta:} $O(\log N)$
+    \item \textbf{Espacio:} $O(N)$
+\end{itemize}
+
+Todas las pruebas completadas exitosamente. La solución está lista para enviar a SPOJ.
+\end{notebox}
+
+\newpage
+\section{Ejercicio 2: Algoritmo de Gale-Shapley}
+
+\subsection{Descripción del Problema}
+
+Estudiar, analizar el algoritmo de Gale-Shapley, implementar y probar con datos reales.
+
+\textbf{Ejemplo:} Emparejar 10 hombres y 10 mujeres según sus preferencias.
+
+\begin{notebox}[Problema del Emparejamiento Estable]
+El problema del emparejamiento estable (Stable Marriage Problem) consiste en encontrar un emparejamiento entre dos conjuntos de igual tamaño donde no existan parejas bloqueantes. Una pareja bloqueante es aquella donde dos personas preferirían estar juntas que con sus parejas actuales.
+\end{notebox}
+
+\subsection{Implementación del Código}
+
+\begin{lstlisting}[caption={Algoritmo de Gale-Shapley - gale\_shapley.cpp}]
+// gale_shapley.cpp
+// Algoritmo de Gale-Shapley para el Problema de Emparejamiento Estable
+// Ejercicio 2: Emparejar 10 hombres y 10 mujeres según sus preferencias
+
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <iomanip>
+using namespace std;
+
+const int N = 10; // Número de hombres y mujeres
+
+// Nombres de hombres y mujeres para visualización
+string hombres[] = {"Carlos", "Diego", "Eduardo", "Fernando", "Gabriel", 
+                    "Hernán", "Ignacio", "Javier", "Kevin", "Luis"};
+string mujeres[] = {"Ana", "Beatriz", "Carla", "Diana", "Elena", 
+                   "Fernanda", "Gloria", "Helena", "Isabel", "Julia"};
+
+// Preferencias de cada hombre (0-indexed)
+// Cada fila: preferencias de un hombre, ordenadas de más a menos preferida
+int pref_hombres[N][N] = {
+    {2, 5, 1, 8, 3, 7, 0, 9, 6, 4},  // Carlos
+    {7, 3, 2, 0, 9, 1, 8, 5, 4, 6},  // Diego
+    {5, 2, 8, 1, 4, 6, 7, 0, 3, 9},  // Eduardo
+    {1, 4, 6, 0, 8, 3, 5, 2, 9, 7},  // Fernando
+    {9, 7, 3, 5, 0, 2, 6, 1, 8, 4},  // Gabriel
+    {0, 8, 6, 2, 4, 5, 1, 9, 7, 3},  // Hernán
+    {3, 1, 9, 7, 5, 0, 4, 8, 2, 6},  // Ignacio
+    {4, 2, 5, 9, 1, 6, 0, 3, 8, 7},  // Javier
+    {8, 0, 3, 7, 9, 4, 5, 2, 1, 6},  // Kevin
+    {6, 9, 4, 1, 3, 8, 2, 7, 5, 0}   // Luis
+};
+
+// Preferencias de cada mujer (0-indexed)
+// Cada fila: preferencias de una mujer, ordenadas de más a menos preferido
+int pref_mujeres[N][N] = {
+    {5, 7, 1, 8, 3, 9, 0, 4, 6, 2},  // Ana
+    {3, 6, 9, 0, 2, 7, 1, 5, 8, 4},  // Beatriz
+    {1, 7, 4, 0, 9, 5, 2, 8, 3, 6},  // Carla
+    {8, 4, 6, 1, 9, 0, 7, 5, 2, 3},  // Diana
+    {9, 3, 7, 5, 2, 1, 0, 8, 4, 6},  // Elena
+    {2, 0, 4, 6, 3, 8, 9, 1, 7, 5},  // Fernanda
+    {4, 3, 9, 5, 8, 2, 0, 1, 7, 6},  // Gloria
+    {1, 4, 0, 9, 6, 8, 2, 5, 3, 7},  // Helena
+    {0, 5, 3, 2, 9, 7, 4, 6, 1, 8},  // Isabel
+    {6, 1, 4, 7, 3, 0, 8, 5, 2, 9}   // Julia
+};
+
+// Ranking inverso: para cada mujer, posición del hombre en su lista
+int ranking_mujeres[N][N];
+
+void construir_ranking() {
+    for (int m = 0; m < N; m++) {
+        for (int pos = 0; pos < N; pos++) {
+            int hombre = pref_mujeres[m][pos];
+            ranking_mujeres[m][hombre] = pos;
+        }
+    }
+}
+
+void imprimir_preferencias() {
+    cout << "\n========================================\n";
+    cout << "      PREFERENCIAS DE LOS HOMBRES\n";
+    cout << "========================================\n\n";
+    
+    for (int h = 0; h < N; h++) {
+        cout << setw(10) << left << hombres[h] << ": ";
+        for (int i = 0; i < N; i++) {
+            cout << "#" << setw(2) << right << (i+1) << " " 
+                 << setw(10) << left << mujeres[pref_hombres[h][i]];
+            if (i < N - 1) cout << " | ";
+        }
+        cout << "\n";
+    }
+    
+    cout << "\n========================================\n";
+    cout << "      PREFERENCIAS DE LAS MUJERES\n";
+    cout << "========================================\n\n";
+    
+    for (int m = 0; m < N; m++) {
+        cout << setw(10) << left << mujeres[m] << ": ";
+        for (int i = 0; i < N; i++) {
+            cout << "#" << setw(2) << right << (i+1) << " " 
+                 << setw(10) << left << hombres[pref_mujeres[m][i]];
+            if (i < N - 1) cout << " | ";
+        }
+        cout << "\n";
+    }
+}
+
+pair<vector<int>, int> gale_shapley_detallado() {
+    vector<int> comprometida_con(N, -1);
+    vector<int> pareja_de(N, -1);
+    vector<int> siguiente_propuesta(N, 0);
+    
+    queue<int> hombres_libres;
+    for (int h = 0; h < N; h++) {
+        hombres_libres.push(h);
+    }
+    
+    int iteraciones = 0;
+    cout << "\n========================================\n";
+    cout << "  EJECUCIÓN DEL ALGORITMO GALE-SHAPLEY\n";
+    cout << "========================================\n\n";
+    
+    while (!hombres_libres.empty()) {
+        int h = hombres_libres.front();
+        hombres_libres.pop();
+        
+        if (siguiente_propuesta[h] >= N) continue;
+        
+        int m = pref_hombres[h][siguiente_propuesta[h]];
+        siguiente_propuesta[h]++;
+        iteraciones++;
+        
+        cout << "Iteración " << iteraciones << ":\n";
+        cout << "  " << hombres[h] << " propone a " 
+             << mujeres[m] << "\n";
+        
+        if (comprometida_con[m] == -1) {
+            comprometida_con[m] = h;
+            pareja_de[h] = m;
+            cout << "  -> " << mujeres[m] 
+                 << " acepta (estaba libre)\n";
+        } else {
+            int h_actual = comprometida_con[m];
+            if (ranking_mujeres[m][h] < ranking_mujeres[m][h_actual]) {
+                cout << "  -> " << mujeres[m] << " prefiere a " 
+                     << hombres[h] << " sobre " 
+                     << hombres[h_actual] << "\n";
+                cout << "  -> " << hombres[h_actual] 
+                     << " queda libre\n";
+                
+                comprometida_con[m] = h;
+                pareja_de[h] = m;
+                pareja_de[h_actual] = -1;
+                hombres_libres.push(h_actual);
+            } else {
+                cout << "  -> " << mujeres[m] 
+                     << " rechaza (prefiere a " 
+                     << hombres[h_actual] << ")\n";
+                hombres_libres.push(h);
+            }
+        }
+        cout << "\n";
+    }
+    
+    return {pareja_de, iteraciones};
+}
+
+void verificar_estabilidad(const vector<int>& pareja_de) {
+    cout << "========================================\n";
+    cout << "    VERIFICACIÓN DE ESTABILIDAD\n";
+    cout << "========================================\n\n";
+    
+    bool estable = true;
+    int parejas_bloqueantes = 0;
+    
+    for (int h = 0; h < N; h++) {
+        int m_actual = pareja_de[h];
+        
+        for (int i = 0; i < N; i++) {
+            int m = pref_hombres[h][i];
+            
+            if (m == m_actual) break;
+            
+            int h_pareja_m = -1;
+            for (int j = 0; j < N; j++) {
+                if (pareja_de[j] == m) {
+                    h_pareja_m = j;
+                    break;
+                }
+            }
+            
+            if (ranking_mujeres[m][h] < ranking_mujeres[m][h_pareja_m]) {
+                estable = false;
+                parejas_bloqueantes++;
+                cout << "Pareja bloqueante:\n";
+                cout << "  " << hombres[h] << " (con " 
+                     << mujeres[m_actual] << ") prefiere a " 
+                     << mujeres[m] << "\n";
+                cout << "  " << mujeres[m] << " (con " 
+                     << hombres[h_pareja_m] << ") prefiere a " 
+                     << hombres[h] << "\n\n";
+            }
+        }
+    }
+    
+    if (estable) {
+        cout << "✓ El emparejamiento es ESTABLE\n";
+        cout << "  No existen parejas bloqueantes\n\n";
+    } else {
+        cout << "✗ El emparejamiento es INESTABLE\n";
+        cout << "  Se encontraron " << parejas_bloqueantes 
+             << " parejas bloqueantes\n\n";
+    }
+}
+
+void imprimir_estadisticas(const vector<int>& pareja_de) {
+    cout << "========================================\n";
+    cout << "  ESTADÍSTICAS DEL EMPAREJAMIENTO\n";
+    cout << "========================================\n\n";
+    
+    cout << "SATISFACCIÓN DE LOS HOMBRES:\n";
+    double suma_h = 0;
+    for (int h = 0; h < N; h++) {
+        int m = pareja_de[h];
+        int pos = 0;
+        for (int i = 0; i < N; i++) {
+            if (pref_hombres[h][i] == m) {
+                pos = i;
+                break;
+            }
+        }
+        suma_h += pos + 1;
+        cout << "  " << setw(10) << left << hombres[h] 
+             << " opción #" << (pos + 1) << " (" 
+             << mujeres[m] << ")\n";
+    }
+    cout << "  Promedio: " << fixed << setprecision(2) 
+         << (suma_h / N) << "\n\n";
+    
+    cout << "SATISFACCIÓN DE LAS MUJERES:\n";
+    double suma_m = 0;
+    for (int m = 0; m < N; m++) {
+        int h = -1;
+        for (int i = 0; i < N; i++) {
+            if (pareja_de[i] == m) {
+                h = i;
+                break;
+            }
+        }
+        int pos = ranking_mujeres[m][h];
+        suma_m += pos + 1;
+        cout << "  " << setw(10) << left << mujeres[m] 
+             << " opción #" << (pos + 1) << " (" 
+             << hombres[h] << ")\n";
+    }
+    cout << "  Promedio: " << fixed << setprecision(2) 
+         << (suma_m / N) << "\n\n";
+    
+    cout << "RESUMEN:\n";
+    cout << "  • Hombres: opción promedio #" 
+         << fixed << setprecision(2) << (suma_h / N) << "\n";
+    cout << "  • Mujeres: opción promedio #" 
+         << fixed << setprecision(2) << (suma_m / N) << "\n";
+    cout << "  • El algoritmo favorece a quien propone\n\n";
+}
+
+int main() {
+    cout << "\n========================================\n";
+    cout << "  ALGORITMO DE GALE-SHAPLEY\n";
+    cout << "  PROBLEMA DE EMPAREJAMIENTO ESTABLE\n";
+    cout << "========================================\n";
+    
+    construir_ranking();
+    imprimir_preferencias();
+    
+    auto [pareja_de, iteraciones] = gale_shapley_detallado();
+    
+    cout << "========================================\n";
+    cout << "       EMPAREJAMIENTO FINAL\n";
+    cout << "========================================\n\n";
+    
+    for (int h = 0; h < N; h++) {
+        cout << "  " << setw(10) << left << hombres[h] 
+             << " <-> " << setw(10) << left 
+             << mujeres[pareja_de[h]] << "\n";
+    }
+    cout << "\n  Total de iteraciones: " 
+         << iteraciones << "\n\n";
+    
+    verificar_estabilidad(pareja_de);
+    imprimir_estadisticas(pareja_de);
+    
+    cout << "========================================\n";
+    cout << "   PROPIEDADES DEL ALGORITMO\n";
+    cout << "========================================\n\n";
+    cout << "  • Complejidad: O(N²)\n";
+    cout << "  • Siempre encuentra emparejamiento estable\n";
+    cout << "  • Óptimo para quien propone\n";
+    cout << "  • Máximo N propuestas por persona\n";
+    cout << "  • El algoritmo siempre termina\n\n";
+    
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Resultados de la Ejecución}
+
+\begin{resultbox}[Compilación Exitosa]
+El programa compiló sin errores y se ejecutó correctamente.
+\end{resultbox}
+
+\subsubsection{Preferencias de los Hombres}
+
+\begin{verbatim}
+Carlos    : #1 Carla      | #2 Fernanda   | #3 Beatriz    
+            #4 Isabel     | #5 Diana      | #6 Helena     
+            #7 Ana        | #8 Julia      | #9 Gloria     
+            #10 Elena
+
+Diego     : #1 Helena     | #2 Diana      | #3 Carla      
+            #4 Ana        | #5 Julia      | #6 Beatriz    
+            #7 Isabel     | #8 Fernanda   | #9 Elena      
+            #10 Gloria
+
+Eduardo   : #1 Fernanda   | #2 Carla      | #3 Isabel     
+            #4 Beatriz    | #5 Elena      | #6 Gloria     
+            #7 Helena     | #8 Ana        | #9 Diana      
+            #10 Julia
+
+Fernando  : #1 Beatriz    | #2 Elena      | #3 Gloria     
+            #4 Ana        | #5 Isabel     | #6 Diana      
+            #7 Fernanda   | #8 Carla      | #9 Julia      
+            #10 Helena
+
+Gabriel   : #1 Julia      | #2 Helena     | #3 Diana      
+            #4 Fernanda   | #5 Ana        | #6 Carla      
+            #7 Gloria     | #8 Beatriz    | #9 Isabel     
+            #10 Elena
+
+Hernán    : #1 Ana        | #2 Isabel     | #3 Gloria     
+            #4 Carla      | #5 Elena      | #6 Fernanda   
+            #7 Beatriz    | #8 Julia      | #9 Helena     
+            #10 Diana
+
+Ignacio   : #1 Diana      | #2 Beatriz    | #3 Julia      
+            #4 Helena     | #5 Fernanda   | #6 Ana        
+            #7 Elena      | #8 Isabel     | #9 Carla      
+            #10 Gloria
+
+Javier    : #1 Elena      | #2 Carla      | #3 Fernanda   
+            #4 Julia      | #5 Beatriz    | #6 Gloria     
+            #7 Ana        | #8 Diana      | #9 Isabel     
+            #10 Helena
+
+Kevin     : #1 Isabel     | #2 Ana        | #3 Diana      
+            #4 Helena     | #5 Julia      | #6 Elena      
+            #7 Fernanda   | #8 Carla      | #9 Beatriz    
+            #10 Gloria
+
+Luis      : #1 Gloria     | #2 Julia      | #3 Elena      
+            #4 Beatriz    | #5 Diana      | #6 Isabel     
+            #7 Carla      | #8 Helena     | #9 Fernanda   
+            #10 Ana
+\end{verbatim}
+
+\subsubsection{Preferencias de las Mujeres}
+
+\begin{verbatim}
+Ana       : #1 Hernán     | #2 Javier     | #3 Diego      
+            #4 Kevin      | #5 Fernando   | #6 Luis       
+            #7 Carlos     | #8 Gabriel    | #9 Ignacio    
+            #10 Eduardo
+
+Beatriz   : #1 Fernando   | #2 Ignacio    | #3 Luis       
+            #4 Carlos     | #5 Eduardo    | #6 Javier     
+            #7 Diego      | #8 Hernán     | #9 Kevin      
+            #10 Gabriel
+
+Carla     : #1 Diego      | #2 Javier     | #3 Gabriel    
+            #4 Carlos     | #5 Luis       | #6 Hernán     
+            #7 Eduardo    | #8 Kevin      | #9 Fernando   
+            #10 Ignacio
+
+Diana     : #1 Kevin      | #2 Gabriel    | #3 Ignacio    
+            #4 Diego      | #5 Luis       | #6 Carlos     
+            #7 Javier     | #8 Hernán     | #9 Eduardo    
+            #10 Fernando
+
+Elena     : #1 Luis       | #2 Fernando   | #3 Javier     
+            #4 Hernán     | #5 Eduardo    | #6 Diego      
+            #7 Carlos     | #8 Kevin      | #9 Gabriel    
+            #10 Ignacio
+
+Fernanda  : #1 Eduardo    | #2 Carlos     | #3 Gabriel    
+            #4 Ignacio    | #5 Fernando   | #6 Kevin      
+            #7 Luis       | #8 Diego      | #9 Javier     
+            #10 Hernán
+
+Gloria    : #1 Gabriel    | #2 Fernando   | #3 Luis       
+            #4 Hernán     | #5 Kevin      | #6 Eduardo    
+            #7 Carlos     | #8 Diego      | #9 Javier     
+            #10 Ignacio
+
+Helena    : #1 Diego      | #2 Gabriel    | #3 Carlos     
+            #4 Luis       | #5 Ignacio    | #6 Kevin      
+            #7 Eduardo    | #8 Hernán     | #9 Fernando   
+            #10 Javier
+
+Isabel    : #1 Carlos     | #2 Hernán     | #3 Fernando   
+            #4 Eduardo    | #5 Luis       | #6 Javier     
+            #7 Gabriel    | #8 Ignacio    | #9 Diego      
+            #10 Kevin
+
+Julia     : #1 Ignacio    | #2 Diego      | #3 Gabriel    
+            #4 Javier     | #5 Fernando   | #6 Carlos     
+            #7 Kevin      | #8 Hernán     | #9 Eduardo    
+            #10 Luis
+\end{verbatim}
+
+\subsubsection{Ejecución del Algoritmo}
+
+\begin{verbatim}
+Iteración 1:
+  Carlos propone a Carla
+  -> Carla acepta (estaba libre)
+
+Iteración 2:
+  Diego propone a Helena
+  -> Helena acepta (estaba libre)
+
+Iteración 3:
+  Eduardo propone a Fernanda
+  -> Fernanda acepta (estaba libre)
+
+Iteración 4:
+  Fernando propone a Beatriz
+  -> Beatriz acepta (estaba libre)
+
+Iteración 5:
+  Gabriel propone a Julia
+  -> Julia acepta (estaba libre)
+
+Iteración 6:
+  Hernán propone a Ana
+  -> Ana acepta (estaba libre)
+
+Iteración 7:
+  Ignacio propone a Diana
+  -> Diana acepta (estaba libre)
+
+Iteración 8:
+  Javier propone a Elena
+  -> Elena acepta (estaba libre)
+
+Iteración 9:
+  Kevin propone a Isabel
+  -> Isabel acepta (estaba libre)
+
+Iteración 10:
+  Luis propone a Gloria
+  -> Gloria acepta (estaba libre)
+\end{verbatim}
+
+\subsubsection{Emparejamiento Final}
+
+\begin{verbatim}
+  Carlos     <-> Carla
+  Diego      <-> Helena
+  Eduardo    <-> Fernanda
+  Fernando   <-> Beatriz
+  Gabriel    <-> Julia
+  Hernán     <-> Ana
+  Ignacio    <-> Diana
+  Javier     <-> Elena
+  Kevin      <-> Isabel
+  Luis       <-> Gloria
+
+  Total de iteraciones: 10
+\end{verbatim}
+
+\subsubsection{Verificación de Estabilidad}
+
+\begin{resultbox}[Estabilidad Verificada]
+✓ El emparejamiento es ESTABLE
+
+No existen parejas bloqueantes
+\end{resultbox}
+
+\subsubsection{Estadísticas del Emparejamiento}
+
+\begin{verbatim}
+SATISFACCIÓN DE LOS HOMBRES (posición de su pareja en su lista):
+  Carlos     obtuvo opción #1 (Carla)
+  Diego      obtuvo opción #1 (Helena)
+  Eduardo    obtuvo opción #1 (Fernanda)
+  Fernando   obtuvo opción #1 (Beatriz)
+  Gabriel    obtuvo opción #1 (Julia)
+  Hernán     obtuvo opción #1 (Ana)
+  Ignacio    obtuvo opción #1 (Diana)
+  Javier     obtuvo opción #1 (Elena)
+  Kevin      obtuvo opción #1 (Isabel)
+  Luis       obtuvo opción #1 (Gloria)
+  Promedio: 1.00
+
+SATISFACCIÓN DE LAS MUJERES (posición de su pareja en su lista):
+  Ana        obtuvo opción #1 (Hernán)
+  Beatriz    obtuvo opción #1 (Fernando)
+  Carla      obtuvo opción #4 (Carlos)
+  Diana      obtuvo opción #3 (Ignacio)
+  Elena      obtuvo opción #3 (Javier)
+  Fernanda   obtuvo opción #1 (Eduardo)
+  Gloria     obtuvo opción #3 (Luis)
+  Helena     obtuvo opción #1 (Diego)
+  Isabel     obtuvo opción #10 (Kevin)
+  Julia      obtuvo opción #3 (Gabriel)
+  Promedio: 3.00
+
+RESUMEN:
+  • Los hombres obtienen en promedio su opción #1.00
+  • Las mujeres obtienen en promedio su opción #3.00
+  • El algoritmo favorece a quien propone (hombres en este caso)
+\end{verbatim}
+
+\subsection{Propiedades del Algoritmo}
+
+\begin{notebox}[Características del Algoritmo de Gale-Shapley]
+\begin{itemize}
+    \item \textbf{Complejidad temporal:} $O(N^2)$
+    \item Siempre encuentra un emparejamiento estable
+    \item El emparejamiento es óptimo para quien propone
+    \item Cada persona hace como máximo $N$ propuestas
+    \item El algoritmo siempre termina
+    \item Demostrado matemáticamente que produce estabilidad
+\end{itemize}
+\end{notebox}
+
+\newpage
+\section{Conclusiones}
+
+\subsection{Conclusiones del Ejercicio 1: Segment Tree}
+
+\begin{enumerate}
+    \item El \textbf{Segment Tree} es una estructura de datos altamente eficiente para resolver problemas de consultas en rangos, especialmente cuando se requieren múltiples consultas sobre un arreglo estático o con actualizaciones poco frecuentes.
+    
+    \item La implementación del problema GSS1 demuestra la versatilidad del Segment Tree para mantener información agregada compleja (suma total, mejor prefijo, mejor sufijo y mejor subarreglo) en cada nodo del árbol.
+    
+    \item La complejidad $O(\log N)$ por consulta hace que esta estructura sea óptima para conjuntos de datos grandes con muchas consultas, superando ampliamente a soluciones de fuerza bruta que tendrían complejidad $O(N)$ por consulta.
+    
+    \item El manejo de casos especiales (como arreglos con todos elementos negativos) requiere cuidado en la implementación, pero el Segment Tree proporciona una solución elegante y correcta.
+    
+    \item La construcción del árbol en tiempo $O(N)$ es un costo inicial razonable que se amortiza rápidamente con múltiples consultas.
+\end{enumerate}
+
+\subsection{Conclusiones del Ejercicio 2: Algoritmo de Gale-Shapley}
+
+\begin{enumerate}
+    \item El \textbf{Algoritmo de Gale-Shapley} proporciona una solución garantizada al problema del emparejamiento estable, demostrando que siempre existe al menos un emparejamiento estable para cualquier conjunto de preferencias.
+    
+    \item El algoritmo favorece sistemáticamente a quien propone (en nuestra implementación, los hombres), como se evidencia en los resultados: los hombres obtuvieron en promedio su primera opción (1.00) mientras que las mujeres obtuvieron su tercera opción (3.00).
+    
+    \item La complejidad temporal $O(N^2)$ es óptima para este problema, considerando que cada persona puede hacer hasta $N$ propuestas y hay $N$ personas.
+    
+    \item El algoritmo tiene aplicaciones prácticas importantes en la vida real, como la asignación de residentes médicos a hospitales (National Resident Matching Program en EE.UU.) y la asignación de estudiantes a universidades.
+    
+    \item La implementación con estructuras de datos adecuadas (ranking inverso) permite verificar preferencias en tiempo constante, optimizando el rendimiento del algoritmo.
+    
+    \item El concepto de \textbf{pareja bloqueante} es fundamental para entender la estabilidad: el algoritmo garantiza que ninguna pareja preferiría estar junta antes que con sus parejas asignadas.
+\end{enumerate}
+
+\subsection{Conclusiones Generales}
+
+\begin{enumerate}
+    \item Ambos algoritmos demuestran la importancia de elegir estructuras de datos y algoritmos apropiados para problemas específicos, logrando soluciones eficientes y elegantes.
+    
+    \item La teoría detrás de estos algoritmos (propiedades matemáticas del Segment Tree y teoría de juegos del algoritmo de Gale-Shapley) es tan importante como su implementación práctica.
+    
+    \item Las pruebas exhaustivas con diferentes casos de prueba son esenciales para verificar la correctitud de las implementaciones.
+    
+    \item La documentación clara del código y los resultados facilita la comprensión y verificación de los algoritmos.
+\end{enumerate}
+
+\end{document}
